@@ -12,6 +12,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _indiceNavegacion = 0;
+  String _categoriaSeleccionada = 'Todos'; // Categoría activa
 
   @override
   Widget build(BuildContext context) {
@@ -86,6 +87,103 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildContenidoPrincipal() {
+    // LAYOUTBUILDER: Detectar el ancho disponible
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Si el ancho es >= 900px (DESKTOP)
+        if (constraints.maxWidth >= 900) {
+          // ROW: Sidebar + Contenido
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Sidebar con ancho fijo
+              _buildSidebar(),
+              // Contenido principal expandido
+              Expanded(
+                child: _buildContenidoScroll(),
+              ),
+            ],
+          );
+        } else {
+          // MÓVIL: Layout normal (Column)
+          return _buildContenidoScroll();
+        }
+      },
+    );
+  }
+
+  // SIDEBAR para desktop (≥ 900px)
+  Widget _buildSidebar() {
+    final categorias = [
+      {'nombre': 'Todos', 'icono': Icons.grid_view},
+      {'nombre': 'Electrónica', 'icono': Icons.devices},
+      {'nombre': 'Fotografía', 'icono': Icons.camera_alt},
+      {'nombre': 'Accesorios', 'icono': Icons.headphones},
+    ];
+
+    return Container(
+      width: 250, // Ancho fijo del sidebar
+      height: double.infinity,
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Encabezado del sidebar
+          Container(
+            padding: const EdgeInsets.all(20),
+            child: const Text(
+              'Categorías',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const Divider(height: 1),
+          // Lista de categorías
+          Expanded(
+            child: ListView.builder(
+              itemCount: categorias.length,
+              itemBuilder: (context, index) {
+                final categoria = categorias[index]['nombre'] as String;
+                final icono = categorias[index]['icono'] as IconData;
+                final esSeleccionada = categoria == _categoriaSeleccionada;
+
+                return ListTile(
+                  leading: Icon(
+                    icono,
+                    color: esSeleccionada ? Colors.blue : Colors.grey[600],
+                  ),
+                  title: Text(
+                    categoria,
+                    style: TextStyle(
+                      fontWeight: esSeleccionada 
+                          ? FontWeight.bold 
+                          : FontWeight.normal,
+                      color: esSeleccionada ? Colors.blue : Colors.black,
+                    ),
+                  ),
+                  selected: esSeleccionada,
+                  selectedTileColor: Colors.blue[50],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  onTap: () {
+                    setState(() {
+                      _categoriaSeleccionada = categoria;
+                    });
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Contenido scrolleable (reutilizado para móvil y desktop)
+  Widget _buildContenidoScroll() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -94,9 +192,24 @@ class _HomeScreenState extends State<HomeScreen> {
           // Encabezado
           _buildEncabezado(),
           const SizedBox(height: 20),
-          // Categorías (scroll horizontal)
-          _buildCategorias(),
-          const SizedBox(height: 20),
+          // Categorías horizontales (solo en móvil < 900px)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Obtener el ancho total de la pantalla
+              final screenWidth = MediaQuery.of(context).size.width;
+              // Si es móvil, mostrar categorías horizontales
+              if (screenWidth < 900) {
+                return Column(
+                  children: [
+                    _buildCategorias(),
+                    const SizedBox(height: 20),
+                  ],
+                );
+              }
+              // Si es desktop, no mostrar (ya están en el sidebar)
+              return const SizedBox.shrink();
+            },
+          ),
           // Título de sección
           const Text(
             'Productos Destacados',
@@ -238,11 +351,17 @@ class _HomeScreenState extends State<HomeScreen> {
         scrollDirection: Axis.horizontal,
         itemCount: categorias.length,
         itemBuilder: (context, index) {
-          final esSeleccionado = index == 0;
+          final categoria = categorias[index];
+          final esSeleccionado = categoria == _categoriaSeleccionada;
+          
           return Container(
             margin: const EdgeInsets.only(right: 12),
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                setState(() {
+                  _categoriaSeleccionada = categoria;
+                });
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: esSeleccionado ? Colors.blue : Colors.white,
                 foregroundColor: esSeleccionado ? Colors.white : Colors.black,
@@ -254,7 +373,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              child: Text(categorias[index]),
+              child: Text(categoria),
             ),
           );
         },
@@ -306,4 +425,3 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-
