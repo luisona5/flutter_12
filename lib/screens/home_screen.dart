@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/producto.dart';
 import '../widgets/producto_card.dart';
 import '../widgets/barra_navegation.dart';
+import '../providers/carrito_provider.dart';
+import 'carrito_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,21 +15,18 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _indiceNavegacion = 0;
-  String _categoriaSeleccionada = 'Todos'; // Categoría activa
+  String _categoriaSeleccionada = 'Todos';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: _buildAppBar(context),
-      // COLUMN: Estructura principal vertical
       body: Column(
         children: [
-          // Contenido principal (se expande)
           Expanded(
-            child: _buildContenidoPrincipal(),
+            child: _buildContenidoPorSeccion(),
           ),
-          // Barra de navegación (altura fija)
           BarraNavegacion(
             indiceActual: _indiceNavegacion,
             onTap: (indice) {
@@ -41,25 +41,22 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
-    // MEDIAQUERY: Obtener información del dispositivo
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
-      // ROW dentro del título para layout horizontal
       title: Row(
         children: [
           const Icon(Icons.store, color: Colors.blue),
           const SizedBox(width: 8),
           const Text(
-            'Mi Tienda',
+            'Mi Tienda - Oña',
             style: TextStyle(
               color: Colors.black,
               fontWeight: FontWeight.bold,
             ),
           ),
-          // Mostrar ancho de pantalla (para debug/aprendizaje)
           const Spacer(),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -78,6 +75,51 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       actions: [
+        // Badge del carrito con cantidad
+        Consumer<CarritoProvider>(
+          builder: (context, carrito, child) {
+            return Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.shopping_cart, color: Colors.black),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CarritoScreen(),
+                      ),
+                    );
+                  },
+                ),
+                if (carrito.cantidadTotal > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      child: Text(
+                        '${carrito.cantidadTotal}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
         IconButton(
           icon: const Icon(Icons.notifications_outlined, color: Colors.black),
           onPressed: () {},
@@ -86,33 +128,73 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Contenido según la sección seleccionada
+  Widget _buildContenidoPorSeccion() {
+    switch (_indiceNavegacion) {
+      case 0: // Inicio
+        return _buildContenidoPrincipal();
+      case 1: // Buscar
+        return _buildSeccionPlaceholder('Buscar', Icons.search);
+      case 2: // Favoritos
+        return _buildSeccionPlaceholder('Favoritos', Icons.favorite);
+      case 3: // Carrito
+        return const CarritoScreen();
+      case 4: // Perfil
+        return _buildSeccionPlaceholder('Perfil', Icons.person);
+      default:
+        return _buildContenidoPrincipal();
+    }
+  }
+
+  // Placeholder para secciones no implementadas
+  Widget _buildSeccionPlaceholder(String titulo, IconData icono) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icono, size: 80, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            titulo,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[700],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Sección en desarrollo',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildContenidoPrincipal() {
-    // LAYOUTBUILDER: Detectar el ancho disponible
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Si el ancho es >= 900px (DESKTOP)
         if (constraints.maxWidth >= 900) {
-          // ROW: Sidebar + Contenido
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Sidebar con ancho fijo
               _buildSidebar(),
-              // Contenido principal expandido
               Expanded(
                 child: _buildContenidoScroll(),
               ),
             ],
           );
         } else {
-          // MÓVIL: Layout normal (Column)
           return _buildContenidoScroll();
         }
       },
     );
   }
 
-  // SIDEBAR para desktop (≥ 900px)
   Widget _buildSidebar() {
     final categorias = [
       {'nombre': 'Todos', 'icono': Icons.grid_view},
@@ -122,13 +204,12 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     return Container(
-      width: 250, // Ancho fijo del sidebar
+      width: 250,
       height: double.infinity,
       color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Encabezado del sidebar
           Container(
             padding: const EdgeInsets.all(20),
             child: const Text(
@@ -140,7 +221,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const Divider(height: 1),
-          // Lista de categorías
           Expanded(
             child: ListView.builder(
               itemCount: categorias.length,
@@ -157,8 +237,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: Text(
                     categoria,
                     style: TextStyle(
-                      fontWeight: esSeleccionada 
-                          ? FontWeight.bold 
+                      fontWeight: esSeleccionada
+                          ? FontWeight.bold
                           : FontWeight.normal,
                       color: esSeleccionada ? Colors.blue : Colors.black,
                     ),
@@ -182,22 +262,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Contenido scrolleable (reutilizado para móvil y desktop)
   Widget _buildContenidoScroll() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Encabezado
           _buildEncabezado(),
           const SizedBox(height: 20),
-          // Categorías horizontales (solo en móvil < 900px)
           LayoutBuilder(
             builder: (context, constraints) {
-              // Obtener el ancho total de la pantalla
               final screenWidth = MediaQuery.of(context).size.width;
-              // Si es móvil, mostrar categorías horizontales
               if (screenWidth < 900) {
                 return Column(
                   children: [
@@ -206,11 +281,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 );
               }
-              // Si es desktop, no mostrar (ya están en el sidebar)
               return const SizedBox.shrink();
             },
           ),
-          // Título de sección
           const Text(
             'Productos Destacados',
             style: TextStyle(
@@ -219,7 +292,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          // Grid de productos (RESPONSIVO)
           _buildGridProductos(),
         ],
       ),
@@ -227,10 +299,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildEncabezado() {
-    // LAYOUTBUILDER: Construye UI según el espacio disponible
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Si el ancho es mayor a 600px, mostrar en ROW
         if (constraints.maxWidth > 600) {
           return Row(
             children: [
@@ -240,7 +310,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           );
         }
-        // Si no, mostrar solo el banner principal
         return _buildBannerPrincipal();
       },
     );
@@ -258,7 +327,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         borderRadius: BorderRadius.circular(16),
       ),
-      // STACK: Texto superpuesto sobre el fondo
       child: Stack(
         children: [
           Padding(
@@ -289,14 +357,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.blue,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
                   ),
                   child: const Text('Ver ofertas'),
                 ),
               ],
             ),
           ),
-          // Icono decorativo posicionado
           Positioned(
             right: 20,
             bottom: 20,
@@ -343,17 +411,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCategorias() {
     final categorias = ['Todos', 'Electrónica', 'Fotografía', 'Accesorios'];
-    
+
     return SizedBox(
       height: 40,
-      // ROW con scroll horizontal
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: categorias.length,
         itemBuilder: (context, index) {
           final categoria = categorias[index];
           final esSeleccionado = categoria == _categoriaSeleccionada;
-          
+
           return Container(
             margin: const EdgeInsets.only(right: 12),
             child: ElevatedButton(
@@ -382,27 +449,21 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildGridProductos() {
-    // LAYOUTBUILDER: Determinar número de columnas según el ancho
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Calcular columnas según el ancho disponible
         int columnas;
         double childAspectRatio;
-        
+
         if (constraints.maxWidth >= 1200) {
-          // Desktop grande: 4 columnas
           columnas = 4;
           childAspectRatio = 0.75;
         } else if (constraints.maxWidth >= 900) {
-          // Desktop: 3 columnas
           columnas = 3;
           childAspectRatio = 0.75;
         } else if (constraints.maxWidth >= 600) {
-          // Tablet: 3 columnas
           columnas = 3;
           childAspectRatio = 0.7;
         } else {
-          // Móvil: 2 columnas
           columnas = 2;
           childAspectRatio = 0.65;
         }

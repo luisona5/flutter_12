@@ -1,4 +1,3 @@
-
 class Producto {
   final String id;
   final String nombre;
@@ -6,8 +5,7 @@ class Producto {
   final double precio;
   final String imagenUrl;
   final String categoria;
-  final int stock; // ← Agregar esta línea
-
+  int stock; // ← Ahora es mutable (sin final)
 
   Producto({
     required this.id,
@@ -16,8 +14,29 @@ class Producto {
     required this.precio,
     required this.imagenUrl,
     required this.categoria,
-    this.stock = 0, // ← Valor por defecto
+    this.stock = 10, // ← Stock inicial de 10
   });
+
+  // Método para crear una copia con valores modificados
+  Producto copyWith({
+    String? id,
+    String? nombre,
+    String? descripcion,
+    double? precio,
+    String? imagenUrl,
+    String? categoria,
+    int? stock,
+  }) {
+    return Producto(
+      id: id ?? this.id,
+      nombre: nombre ?? this.nombre,
+      descripcion: descripcion ?? this.descripcion,
+      precio: precio ?? this.precio,
+      imagenUrl: imagenUrl ?? this.imagenUrl,
+      categoria: categoria ?? this.categoria,
+      stock: stock ?? this.stock,
+    );
+  }
 }
 
 // Datos de ejemplo para el taller
@@ -29,6 +48,7 @@ List<Producto> productosEjemplo = [
     precio: 1299.99,
     imagenUrl: 'laptop',
     categoria: 'Electrónica',
+    stock: 10,
   ),
   Producto(
     id: '2',
@@ -37,6 +57,7 @@ List<Producto> productosEjemplo = [
     precio: 89.99,
     imagenUrl: 'headphones',
     categoria: 'Electrónica',
+    stock: 10,
   ),
   Producto(
     id: '3',
@@ -45,6 +66,7 @@ List<Producto> productosEjemplo = [
     precio: 249.99,
     imagenUrl: 'watch',
     categoria: 'Electrónica',
+    stock: 10,
   ),
   Producto(
     id: '4',
@@ -53,6 +75,7 @@ List<Producto> productosEjemplo = [
     precio: 599.99,
     imagenUrl: 'camera',
     categoria: 'Fotografía',
+    stock: 10,
   ),
   Producto(
     id: '5',
@@ -61,6 +84,7 @@ List<Producto> productosEjemplo = [
     precio: 129.99,
     imagenUrl: 'keyboard',
     categoria: 'Accesorios',
+    stock: 10,
   ),
   Producto(
     id: '6',
@@ -69,5 +93,6 @@ List<Producto> productosEjemplo = [
     precio: 49.99,
     imagenUrl: 'mouse',
     categoria: 'Accesorios',
+    stock: 10,
   ),
 ];

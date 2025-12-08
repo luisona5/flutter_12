@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/producto.dart';
-import '../screens/producto_detalle_screen.dart'; 
+import '../screens/producto_detalle_screen.dart';
+import '../providers/carrito_provider.dart';
 
 class ProductoCard extends StatelessWidget {
   final Producto producto;
@@ -13,9 +15,7 @@ class ProductoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      // GESTUREDETECTOR: Detecta toques y gestos del usuario
       onTap: () {
-        // Navegar a la pantalla de detalle cuando se hace tap
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -26,7 +26,6 @@ class ProductoCard extends StatelessWidget {
         );
       },
       child: Container(
-        // CONTAINER: Widget para decoración y dimensiones
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -38,10 +37,8 @@ class ProductoCard extends StatelessWidget {
             ),
           ],
         ),
-        // STACK: Permite superponer widgets (como capas)
         child: Stack(
           children: [
-            // COLUMN: Organiza widgets verticalmente
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -68,7 +65,6 @@ class ProductoCard extends StatelessWidget {
                   flex: 2,
                   child: Padding(
                     padding: const EdgeInsets.all(12),
-                    // COLUMN anidada para texto
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -82,16 +78,21 @@ class ProductoCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        Text(
-                          producto.descripcion,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 12,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        // Stock disponible - NUEVO
+                        Consumer<CarritoProvider>(
+                          builder: (context, carrito, child) {
+                            return Text(
+                              'Stock: ${producto.stock}',
+                              style: TextStyle(
+                                color: producto.stock > 0
+                                    ? Colors.green[700]
+                                    : Colors.red,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            );
+                          },
                         ),
-                        // ROW: Organiza widgets horizontalmente
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -106,11 +107,15 @@ class ProductoCard extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
-                                color: Colors.blue,
+                                color: producto.stock > 0
+                                    ? Colors.blue
+                                    : Colors.grey,
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Icon(
-                                Icons.add_shopping_cart,
+                              child: Icon(
+                                producto.stock > 0
+                                    ? Icons.add_shopping_cart
+                                    : Icons.block,
                                 color: Colors.white,
                                 size: 18,
                               ),
@@ -123,7 +128,7 @@ class ProductoCard extends StatelessWidget {
                 ),
               ],
             ),
-            // POSITIONED: Posiciona un widget en coordenadas específicas dentro del Stack
+            // Badge "NUEVO"
             Positioned(
               top: 8,
               right: 8,
@@ -143,13 +148,32 @@ class ProductoCard extends StatelessWidget {
                 ),
               ),
             ),
+            // Badge de stock agotado - NUEVO
+            if (producto.stock == 0)
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'AGOTADO',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
   }
 
-  // Metodo auxiliar para obtener iconos
   IconData _getIcono(String tipo) {
     switch (tipo) {
       case 'laptop':
